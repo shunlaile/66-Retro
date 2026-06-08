@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaign Dashboard — 6.6 / 5.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f4efe6;--ink:#1c1a17;--ink2:#4a443c;--muted:#8a8175;--line:#ded6c7;--card:#fbf8f2;--accent:#ee4d2d;--accent2:#0f7a6b;--mayc:#a8946e;--up:#0f7a6b;--down:#c2410c;--grid:#e7dfd1;}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif;line-height:1.5;font-feature-settings:'tnum' 1;background-image:radial-gradient(var(--grid) 0.6px,transparent 0.6px);background-size:22px 22px;}
+.wrap{max-width:1180px;margin:0 auto;padding:44px 28px 80px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.head{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:8px}
+.kicker{font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.22em;font-size:12px;color:var(--accent);font-weight:700}
+h1{font-family:'Fraunces';font-weight:600;font-size:clamp(34px,6vw,60px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 6px}
+h1 em{font-style:italic;color:var(--accent)}
+.sub{color:var(--ink2);font-size:15px;max-width:62ch}
+.controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px}
+.filt{display:inline-flex;border:1.5px solid var(--ink);border-radius:30px;overflow:hidden}
+.filt button{border:none;background:transparent;font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.1em;font-size:13px;font-weight:700;color:var(--ink2);padding:9px 22px;cursor:pointer;transition:.15s}
+.filt button.on{background:var(--ink);color:var(--paper)}
+.filt button.on[data-mode="jun"]{background:var(--accent);border-color:var(--accent)}
+.filt button.on[data-mode="may"]{background:var(--mayc)}
+.viewlab{font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--muted);font-weight:700}
+.periodtag{font-size:13px;color:var(--ink2)}.periodtag b{font-family:'Fraunces';color:var(--ink);font-weight:600}
+.sec{font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.18em;font-size:12.5px;font-weight:700;color:var(--muted);margin:46px 0 16px;display:flex;align-items:center;gap:12px}
+.sec::after{content:'';flex:1;height:1px;background:var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:18px 18px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.kpi.alt::before{background:var(--accent2)}
+.kpi.may::before{background:var(--mayc)}
+.kpi .lab{font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.1em;font-size:11.5px;color:var(--muted);font-weight:600}
+.kpi .big{font-family:'Fraunces';font-weight:600;font-size:30px;letter-spacing:-.02em;margin:9px 0 2px;line-height:1}
+.kpi .prev{font-size:12px;color:var(--muted);min-height:15px}
+.kpi .delta{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13px;margin-top:9px;padding:2px 8px;border-radius:20px}
+.delta.pos{color:var(--up);background:rgba(15,122,107,.1)}
+.delta.neg{color:var(--down);background:rgba(194,65,12,.1)}
+.delta.warn{color:#9a6a00;background:rgba(154,106,0,.12)}
+.charts{display:grid;grid-template-columns:1.15fr 1fr;gap:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:22px 24px}
+.panel h3{font-family:'Fraunces';font-weight:600;font-size:18px;margin-bottom:3px}
+.panel .pnote{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.bars{display:flex;flex-direction:column;gap:16px}
+.barrow .blab{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}.barrow .blab b{font-weight:600}
+.track{position:relative;height:30px}
+.bg{position:absolute;inset:0;background:#efe9dd;border-radius:2px}
+.fillM,.fillJ,.fillS{position:absolute;left:0;height:9px;border-radius:2px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.fillM{top:4px;background:#c9bda3}.fillJ{top:17px;background:var(--accent)}
+.fillS{top:10px;height:14px}
+.lgnd{display:flex;gap:18px;font-size:12px;color:var(--ink2);margin-top:14px}
+.dotJ,.dotM{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.dotJ{background:var(--accent)}.dotM{background:var(--mayc)}
+.daily{display:flex;gap:30px;align-items:flex-end;height:230px;padding:0 8px;border-bottom:1px solid var(--line)}
+.dgrp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.dbars{display:flex;gap:8px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.db{width:38px;border-radius:3px 3px 0 0;position:relative;display:flex;justify-content:center;transition:height 1s cubic-bezier(.2,.8,.2,1)}
+.db.m{background:var(--mayc)}.db.j{background:var(--accent)}
+.db .v{position:absolute;top:-20px;font-size:11px;font-weight:700;white-space:nowrap;color:var(--ink2)}
+.dxlab{font-size:12px;color:var(--muted);margin-top:10px;text-align:center;font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.06em}
+.tablewrap{background:var(--card);border:1px solid var(--line);border-radius:3px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:680px}
+th,td{padding:11px 14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;color:var(--muted);font-weight:700;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--card)}
+th:hover{color:var(--ink)}
+th.sortable::after{content:'  \2195';opacity:.35;font-size:10px}
+th.asc::after{content:'  \2191';opacity:1;color:var(--accent)}
+th.desc::after{content:'  \2193';opacity:1;color:var(--accent)}
+td.l,th.l{text-align:left}
+tbody tr:hover{background:#f1ebdf}
+.shop{font-weight:600;color:var(--ink)}
+.mom{font-weight:700}.mom.pos{color:var(--up)}.mom.neg{color:var(--down)}
+.badge{font-family:'Archivo Narrow';font-weight:700;font-size:10.5px;letter-spacing:.08em;background:var(--accent);color:#fff;padding:2px 7px;border-radius:20px}
+.tg{font-family:'Archivo Narrow';font-weight:700;font-size:10px;letter-spacing:.06em;padding:1px 6px;border-radius:20px;margin-left:5px;vertical-align:1px}
+.tg.kol{background:rgba(238,77,45,.14);color:var(--accent)}
+.tg.sel{background:rgba(15,122,107,.14);color:var(--accent2)}
+.tg.oa{background:#ece4d4;color:var(--muted)}
+.minibar{display:inline-block;height:7px;border-radius:2px;background:var(--accent);vertical-align:middle}
+tfoot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none;background:#f0eadd}
+tfoot td.l{font-family:'Fraunces';font-size:14px}
+.rank{font-family:'Fraunces';font-weight:600;color:var(--muted);width:32px}
+.pname{display:flex;flex-direction:column;gap:2px;max-width:300px;white-space:normal}
+.pname b{font-weight:600;line-height:1.25}
+.pmeta{font-size:11px;color:var(--muted)}
+.cattag{display:inline-block;font-size:10px;font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.05em;color:var(--accent2);font-weight:700}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:30px;overflow:hidden;background:var(--card)}
+.toggle button{border:none;background:transparent;font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;font-weight:700;color:var(--muted);padding:6px 16px;cursor:pointer}
+.toggle button.on{background:var(--accent);color:#fff}
+.sechead{display:flex;align-items:center;gap:12px;margin:46px 0 16px}
+.sechead .t{font-family:'Archivo Narrow';text-transform:uppercase;letter-spacing:.18em;font-size:12.5px;font-weight:700;color:var(--muted)}
+.sechead .line{flex:1;height:1px;background:var(--line)}
+.insight{background:linear-gradient(180deg,#fff8ef,#fbf4e8);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:3px;padding:20px 24px;margin-top:4px;font-size:14.5px;color:var(--ink2);line-height:1.65}
+.insight b{color:var(--ink);font-weight:600}.insight .pill{font-weight:700}
+.foot{margin-top:40px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:18px;line-height:1.7}
+@media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}}
+@media(max-width:520px){.wrap{padding:28px 16px 60px}.kpi .big{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kicker">Shopee VN · Sales Monitor · Campaign Review</div>
+    <h1>Campaign <em>6.6</em> &amp; <em>5.5</em></h1>
+    <p class="sub">Flash-sale campaign performance across 20 stores (Xiaomi &amp; home-appliance group). All values in <b>USD</b>.</p>
+    <div class="controls">
+      <span class="viewlab">View</span>
+      <div class="filt" id="filt">
+        <button data-mode="jun" class="on">June (6.6)</button>
+        <button data-mode="may">May (5.5)</button>
+        <button data-mode="compare">Compare</button>
+      </div>
+      <span class="periodtag" id="periodtag"></span>
+    </div>
+  </header>
+
+  <div class="sec" id="sec-overview">Campaign Overview</div>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="sec">Trend &amp; Mix</div>
+  <div class="charts">
+    <div class="panel">
+      <h3 id="dailyTitle">Revenue by campaign day</h3>
+      <div class="pnote" id="dailyNote"></div>
+      <div class="daily" id="daily"></div>
+      <div class="lgnd" id="dailyLgnd"></div>
+    </div>
+    <div class="panel">
+      <h3>Revenue contribution — Top stores</h3>
+      <div class="pnote" id="topNote"></div>
+      <div class="bars" id="topbars"></div>
+    </div>
+  </div>
+
+  <div class="sec">Store Breakdown</div>
+  <div class="tablewrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot></table></div>
+
+  <div class="sechead">
+    <span class="t" id="skuTitle">Top 15 SKUs — June</span>
+    <span class="line"></span>
+    <span class="t" style="color:var(--ink2)">Rank by</span>
+    <div class="toggle" id="metricToggle">
+      <button data-m="sales" class="on">Revenue</button>
+      <button data-m="units">Units</button>
+    </div>
+  </div>
+  <div class="tablewrap"><table id="skutbl"><thead id="skuhead"></thead><tbody id="skubody"></tbody></table></div>
+  <div class="pnote" id="skuNote" style="margin-top:10px"></div>
+
+  <div id="lsSection">
+    <div class="sec" id="lsSecTitle">KOL Livestream — June (6.6)</div>
+    <div class="kpis" id="lsKpis"></div>
+    <div class="charts" style="margin-top:18px">
+      <div class="panel">
+        <h3>By streamer type</h3>
+        <div class="pnote">Direct GMV by who runs the stream (USD)</div>
+        <div class="bars" id="lsType"></div>
+      </div>
+      <div class="panel">
+        <h3>By category</h3>
+        <div class="pnote">Direct GMV by main category (USD)</div>
+        <div class="bars" id="lsCat"></div>
+      </div>
+    </div>
+    <div class="sechead"><span class="t">KOL Sales — by name</span><span class="line"></span><span class="t" id="kolSummary" style="color:var(--ink2)"></span></div>
+    <div class="tablewrap"><table id="kolTbl"><thead id="kolHead"></thead><tbody id="kolBody"></tbody></table></div>
+    <div class="pnote" style="margin-top:10px">Named streamers from the workbook&rsquo;s KOL list. <span class="tg sel" style="margin:0">collab</span> = one streamer ID ran multiple co-host sessions, so GMV can&rsquo;t be split per individual name.</div>
+    <div class="sechead"><span class="t">Top Streamers — by direct GMV</span><span class="line"></span></div>
+    <div class="tablewrap"><table id="lsTbl"><thead id="lsHead"></thead><tbody id="lsBody"></tbody></table></div>
+    <div class="pnote" style="margin-top:10px">Session-level livestream attribution, 6.6 window (Jun 5–6). GMV = direct GMV credited to livestream sessions; a streamer can run several sessions across shops. Streamers shown by ID.</div>
+  </div>
+
+  <div class="sec">Read-out</div>
+  <div class="insight" id="insight"></div>
+
+  <div class="foot">
+    Source: Shopee Sales Monitor &amp; Product Ranking exports — <span class="num">05–06 Jun 2026</span> &amp; <span class="num">04–05 May 2026</span>.
+    Rev = Sales (USD) · AOV = Revenue / Orders · Cost/Rev = Total Gross Cost / Sales. Each month is shown on its own; use Compare for month-over-month. Click any header to sort.
+  </div>
+</div>
+
+<script>
+const DATA={"jun":[{"name":"Xiaomi Official Store","sales":2446110.67,"seller_sales":3219635.34,"orders":10377,"units":11012,"spo":235.72,"atc":114533,"cost":773585.27,"voucher":767772.2},{"name":"Xiaomi Mobile Authorized Store","sales":663261.44,"seller_sales":884835.75,"orders":2404,"units":3856,"spo":275.9,"atc":27911,"cost":221451.38,"voucher":221451.38},{"name":"Deerma Official Store","sales":173595.11,"seller_sales":236792.86,"orders":4912,"units":6029,"spo":35.34,"atc":24644,"cost":64089.35,"voucher":64069.69},{"name":"Simplus Official Store","sales":105475.04,"seller_sales":148963.51,"orders":7288,"units":8316,"spo":14.47,"atc":40000,"cost":43060.7,"voucher":41432.11},{"name":"Vention Official Store","sales":66579.84,"seller_sales":97815.98,"orders":8735,"units":9682,"spo":7.62,"atc":35213,"cost":30522.08,"voucher":24366.92},{"name":"Perysmith Vietnam Store","sales":61464.03,"seller_sales":85994.14,"orders":1697,"units":2149,"spo":36.22,"atc":8282,"cost":24694.31,"voucher":22758.09},{"name":"AQUA Small Home Appliance","sales":51605.09,"seller_sales":69597.26,"orders":2291,"units":2322,"spo":22.53,"atc":10930,"cost":18016.13,"voucher":17376.5},{"name":"Philips Massager Official Store","sales":46420.48,"seller_sales":63982.07,"orders":1052,"units":1105,"spo":44.13,"atc":5007,"cost":17570.07,"voucher":16020.42},{"name":"Toshiba Premium Store","sales":34483.03,"seller_sales":43302.71,"orders":100,"units":109,"spo":344.83,"atc":1172,"cost":8703.2,"voucher":8703.2},{"name":"Enchen.vn","sales":28866.4,"seller_sales":41120.89,"orders":3111,"units":3408,"spo":9.28,"atc":11239,"cost":12126.24,"voucher":12047.14},{"name":"EYSIN Vietnam Store","sales":28349.6,"seller_sales":38437.83,"orders":921,"units":1089,"spo":30.78,"atc":5163,"cost":10043.91,"voucher":8822.4},{"name":"INSSA OFFICIAL STORE","sales":15273.67,"seller_sales":20924.21,"orders":788,"units":834,"spo":19.38,"atc":4726,"cost":5639.61,"voucher":4732.74},{"name":"Uwant Premium","sales":10705.36,"seller_sales":14309.45,"orders":83,"units":89,"spo":128.98,"atc":557,"cost":3690.25,"voucher":3690.25},{"name":"SimplusPink","sales":9343.28,"seller_sales":12483.0,"orders":908,"units":1050,"spo":10.29,"atc":4615,"cost":3027.3,"voucher":2915.13},{"name":"Mivietnam","sales":7323.84,"seller_sales":10136.77,"orders":161,"units":172,"spo":45.49,"atc":1362,"cost":2975.72,"voucher":2975.72},{"name":"MI Mall VN","sales":4421.21,"seller_sales":5792.62,"orders":85,"units":91,"spo":52.01,"atc":1013,"cost":1370.79,"voucher":1370.79},{"name":"Comfee Store","sales":4376.78,"seller_sales":5853.87,"orders":27,"units":28,"spo":162.1,"atc":488,"cost":1485.24,"voucher":1485.24},{"name":"Zolele Premium","sales":2643.66,"seller_sales":3420.41,"orders":500,"units":718,"spo":5.29,"atc":2006,"cost":819.06,"voucher":781.58},{"name":"GERM VIỆT NAM","sales":1364.93,"seller_sales":1830.28,"orders":71,"units":106,"spo":19.22,"atc":491,"cost":464.76,"voucher":456.92},{"name":"MI Smart Home VN","sales":212.01,"seller_sales":272.8,"orders":2,"units":2,"spo":106.0,"atc":48,"cost":61.38,"voucher":61.38}],"may":[{"name":"Xiaomi Official Store","sales":1457294.77,"seller_sales":1799386.23,"orders":6625,"units":7216,"spo":219.97,"atc":87864,"cost":341436.65,"voucher":341436.65},{"name":"Xiaomi Mobile Authorized Store","sales":945298.14,"seller_sales":1247602.19,"orders":3263,"units":3346,"spo":289.7,"atc":57543,"cost":302110.96,"voucher":302110.96},{"name":"MI Mall VN","sales":128002.63,"seller_sales":165151.4,"orders":972,"units":990,"spo":131.69,"atc":12835,"cost":37126.07,"voucher":37126.07},{"name":"Deerma Official Store","sales":122401.1,"seller_sales":162943.99,"orders":4427,"units":4783,"spo":27.65,"atc":25096,"cost":40517.12,"voucher":40515.23},{"name":"Simplus Official Store","sales":94345.14,"seller_sales":132803.39,"orders":6341,"units":6650,"spo":14.88,"atc":38853,"cost":38040.45,"voucher":38032.6},{"name":"Toshiba Premium Store","sales":43913.73,"seller_sales":53662.49,"orders":156,"units":156,"spo":281.5,"atc":2078,"cost":9651.65,"voucher":9651.65},{"name":"Philips Massager Official Store","sales":39493.74,"seller_sales":54357.55,"orders":852,"units":1673,"spo":46.35,"atc":4071,"cost":14838.22,"voucher":14838.22},{"name":"Perysmith Vietnam Store","sales":32481.45,"seller_sales":41691.59,"orders":840,"units":1103,"spo":38.67,"atc":5582,"cost":9204.27,"voucher":9204.27},{"name":"Enchen.vn","sales":31893.87,"seller_sales":45024.57,"orders":3992,"units":4319,"spo":7.99,"atc":14060,"cost":12996.39,"voucher":12992.6},{"name":"AQUA Small Home Appliance","sales":28788.67,"seller_sales":40026.54,"orders":1009,"units":1024,"spo":28.53,"atc":5817,"cost":11205.4,"voucher":11205.4},{"name":"Vention Official Store","sales":16663.4,"seller_sales":24503.45,"orders":1535,"units":2060,"spo":10.86,"atc":11393,"cost":7676.38,"voucher":7676.38},{"name":"EYSIN Vietnam Store","sales":10732.07,"seller_sales":13379.12,"orders":285,"units":381,"spo":37.66,"atc":2932,"cost":2655.81,"voucher":2655.81},{"name":"Uwant Premium","sales":9546.82,"seller_sales":12041.33,"orders":60,"units":64,"spo":159.11,"atc":485,"cost":2503.91,"voucher":2503.91},{"name":"SimplusPink","sales":8056.35,"seller_sales":10537.88,"orders":862,"units":952,"spo":9.35,"atc":4895,"cost":2389.38,"voucher":2389.38},{"name":"Comfee Store","sales":7251.65,"seller_sales":9066.95,"orders":41,"units":41,"spo":176.87,"atc":653,"cost":1792.16,"voucher":1792.16},{"name":"Zolele Premium","sales":2459.1,"seller_sales":3327.72,"orders":452,"units":618,"spo":5.44,"atc":2048,"cost":868.38,"voucher":865.43},{"name":"INSSA OFFICIAL STORE","sales":2362.73,"seller_sales":2998.34,"orders":122,"units":144,"spo":19.37,"atc":1018,"cost":652.44,"voucher":652.44},{"name":"Mivietnam","sales":1885.04,"seller_sales":2364.94,"orders":60,"units":63,"spo":31.42,"atc":465,"cost":508.52,"voucher":508.52},{"name":"GERM VIỆT NAM","sales":719.3,"seller_sales":972.3,"orders":40,"units":63,"spo":17.98,"atc":277,"cost":232.72,"voucher":232.72},{"name":"MI Smart Home VN","sales":253.17,"seller_sales":313.41,"orders":5,"units":5,"spo":50.63,"atc":173,"cost":60.43,"voucher":60.43}],"daily":{"jun":[{"date":"06-05","sales":1150000.0,"orders":9756},{"date":"06-06","sales":2610000.0,"orders":35757}],"may":[{"date":"05-04","sales":786136.48,"orders":9609},{"date":"05-05","sales":2200000.0,"orders":22330}]}}, SKU={"jun":[{"pid":"24740059865","name":"Điện thoại POCO X7 Pro 5G (12+256GB) | Màn 6.67\" 120Hz AMOLED | 8400-Ultra | Camera 50MP | 6000mAh","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":45200.8,"units":196,"orders":147,"views":8654,"oSales":43287.08,"oUnits":183,"isNew":false},{"pid":"55306776828","name":"Điện thoại thông minh POCO X8 PRO Max | Pin cực lớn 8500mAh(typ) sạc nhanh 100W| Màn hình AMOLED 1.5K 120H","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":70692.07,"units":160,"orders":160,"views":15293,"oSales":26887.09,"oUnits":55,"isNew":false},{"pid":"41301411612","name":"[TV Mới-Độc quyền online] Xiaomi TV A 43'' 2026(UHD) | Màn hình bảo vệ mắt 4K với chất lượng hình ảnh HDR","shop":"Xiaomi Official Store","cat":"TVs & Accessories","sales":33781.77,"units":212,"orders":212,"views":7904,"oSales":13062.74,"oUnits":74,"isNew":false},{"pid":"3167658907","name":"Máy hút bụi cầm tay Deerma DX118C lực hút 15000pa, công suất 600W với bộ lọc bụi mịn HEPA - Bảo hành 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":18945.52,"units":1457,"orders":1432,"views":23249,"oSales":20839.37,"oUnits":1496,"isNew":false},{"pid":"26221234933","name":"[Livestream] Điện thoại POCO X7 Pro 5G (8+256GB | 12+256GB) | Màn 6.67\" 120Hz AMOLED | D8400-Ultra","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":85491.07,"units":369,"orders":247,"views":16433,"oSales":129242.42,"oUnits":562,"isNew":false},{"pid":"42013800496","name":"[Live] Bàn ủi hơi nước cầm tay AQUA W2598 150ml - Nút phun tự động - Ủi treo đứng và ủi phẳng nằm","shop":"AQUA Small Home Appliance","cat":"Small Household Appliances","sales":13094.28,"units":956,"orders":952,"views":9376,"oSales":50.38,"oUnits":2,"isNew":false},{"pid":"44075695445","name":"Điện thoại Xiaomi 15 (12+512GB) | Màn 6.3\" AMOLED | 3 Camera Leica | Snapdragon 8 Elite HyperAI","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":33577.46,"units":63,"orders":48,"views":6053,"oSales":148996.09,"oUnits":286,"isNew":false},{"pid":"57004332573","name":"Tai Nghe Bluetooth 6.0 E11 Plus Kết nối Không Độ Trễ, Tích hợp App,Thời Lượng Pin Lên Tới 30 Giờ","shop":"Vention Official Store","cat":"Earphones, Headphones & Headsets","sales":3824.45,"units":638,"orders":633,"views":6722,"oSales":87.02,"oUnits":14,"isNew":false},{"pid":"40514520161","name":"Xiaomi 15T | Thiết kế thân máy bo tròn thanh lịch | Màn hình 6.83\" bảo vệ mắt cùng tần số quét 120Hz","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":211324.34,"units":631,"orders":631,"views":24204,"oSales":126649.23,"oUnits":344,"isNew":false},{"pid":"29175945230","name":"[Livestream] Điện thoại Xiaomi 15 (12+256GB |12+512GB) | 3 Camera Leica | Snapdragon 8 Elite","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":64980.18,"units":126,"orders":88,"views":13307,"oSales":148103.27,"oUnits":283,"isNew":false},{"pid":"27794294696","name":"Máy tính bảng Xiaomi Pad 8 (8+128GB|8+256GB)| Pin 9200mAh (typ)| Màn hình 3.2K 144Hz| Vi xử lý Snapdragon 8s Gen 4","shop":"Xiaomi Official Store","cat":"Tablets","sales":44038.03,"units":146,"orders":144,"views":8422,"oSales":23140.08,"oUnits":67,"isNew":false},{"pid":"28122130767","name":"Máy hút bụi cầm tay Deerma DX120C đen lực hút 16000pa, công suất 600W phiên bản mới 2025 - Bảo hành 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":13510.58,"units":659,"orders":444,"views":10402,"oSales":16687.22,"oUnits":794,"isNew":false},{"pid":"49509922719","name":"[Lực Gió Siêu Cấp] Quạt Cầm Tay Vention 100 Cấp Độ Gió, Gập 90°, Pin 3000mAh 8H, LED Hiển Thị, Motor 13000RPM, Treo Cổ","shop":"Vention Official Store","cat":"Accessories","sales":29922.19,"units":4549,"orders":4467,"views":38766,"oSales":null,"oUnits":null,"isNew":true},{"pid":"46256441980","name":"[Livestream] Điện thoại POCO X8 Pro 5G (8+256GB| 8+512GB| 12+512GB) | Màn 6.59\" 1,5K | D8500U","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":217602.28,"units":794,"orders":548,"views":24562,"oSales":93196.58,"oUnits":316,"isNew":false},{"pid":"10747307630","name":"Simplus Máy Xay Thịt 2L Cối Thủy Tinh 420 Lưỡi Dao Thép Không Gỉ DDJR003- Bảo Hành 1 Năm 1 Đổi 1","shop":"Simplus Official Store","cat":"Kitchen Appliances","sales":4234.49,"units":449,"orders":441,"views":6623,"oSales":2744.54,"oUnits":298,"isNew":false},{"pid":"54151602054","name":"[New] Máy tính bảng POCO Pad M1 | 8GB+256GB, màn hình 12.1'' 120Hz 2.5K, pin khủng 12000mAh, Snapdragon® 7s Gen 4, hỗ tr","shop":"Xiaomi Official Store","cat":"Tablets","sales":95444.46,"units":494,"orders":486,"views":20922,"oSales":58616.91,"oUnits":301,"isNew":false},{"pid":"40103740699","name":"Xiaomi TV A Pro 65'' 2026 | Màn hình QLED 4K độ sáng cao với công nghệ làm mượt chuyển động","shop":"Xiaomi Official Store","cat":"TVs & Accessories","sales":36359.5,"units":104,"orders":104,"views":2119,"oSales":2047.17,"oUnits":5,"isNew":false},{"pid":"40805564536","name":"Redmi Pad 2｜Màn hình 11\" 2,5K siêu rõ nét｜Pin dung lượng khủng đến 9000mAh (typ)｜Helio G100-Ultra tiên tiến","shop":"Xiaomi Official Store","cat":"Tablets","sales":91640.12,"units":645,"orders":630,"views":25404,"oSales":37168.58,"oUnits":260,"isNew":false},{"pid":"48656445603","name":"Điện thoại POCO X8 Pro 5G (8+256GB| 8+512GB| 12+512GB) | Màn 6.59\" 1,5K 120Hz | D8500U | 50MP","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":154523.23,"units":571,"orders":378,"views":15711,"oSales":51879.57,"oUnits":172,"isNew":false},{"pid":"45806590890","name":"Điện thoại thông minh Xiaomi 17 (12+256GB|12+512GB)|Pin 6330mAh (typ)| Ống kính Leica Summilux| Snapdragon 8 Elite Gen","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":135899.97,"units":202,"orders":202,"views":11798,"oSales":166920.73,"oUnits":250,"isNew":false},{"pid":"18086169596","name":"Máy cạo râu Enchen Mini 6 lưỡi dao kép mỏng, chống nước IPX7, pin sử dụng đến 2 tháng - BH 12 tháng","shop":"Enchen.vn","cat":"Men's Care","sales":6859.24,"units":1054,"orders":1035,"views":13720,"oSales":8692.6,"oUnits":1537,"isNew":false},{"pid":"29786039616","name":"Bộ lọc Hepa cho máy hút bụi Deerma DX120C","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":56.62,"units":541,"orders":265,"views":310,"oSales":134.69,"oUnits":68,"isNew":false},{"pid":"41860715660","name":"Máy hút bụi lau sàn Deerma VX100 Ultra S lực hút 22.000pa tự động làm sạch và sấy khô ở nhiệt độ cao - BH 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":58565.88,"units":357,"orders":235,"views":17923,"oSales":19831.69,"oUnits":115,"isNew":false},{"pid":"47855458277","name":"(Livestream) Điện thoại thông minh Xiaomi 17 (12+512GB|12+256GB)|Pin 6330mAh (typ)| Ống kính Leica Summilux|","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":60300.47,"units":90,"orders":90,"views":6372,"oSales":66488.81,"oUnits":98,"isNew":false},{"pid":"42312594014","name":"[New] POCO C85｜Pin khủng 6000mAh (typ)｜Lên đến 22 giờ xem video｜Màn hình lớn 6.9\"sống động｜Sạc nhanh 33W","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":49379.93,"units":486,"orders":484,"views":9189,"oSales":147867.6,"oUnits":1624,"isNew":false},{"pid":"46456098642","name":"Điện thoại thông minh POCO X8 PRO| Pin cực lớn 6500mAh(typ) sạc nhanh 100W| Màn hình AMOLED 1.5K 120Hz","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":1107112.77,"units":4078,"orders":4072,"views":115757,"oSales":326555.28,"oUnits":1087,"isNew":false},{"pid":"19461490320","name":"Simplus Bàn ủi hơi nước cầm tay gấp gọn tiện lợi Tay cầm gấp gọn 90° 1200W Bình chứa nước 180ml GTJH020","shop":"Simplus Official Store","cat":"Small Household Appliances","sales":17008.23,"units":1484,"orders":1452,"views":18712,"oSales":14637.57,"oUnits":1243,"isNew":false},{"pid":"27354479852","name":"Máy cạo râu Enchen K8 đầu cạo 2D chống nước, 18 lưỡi dao tự mài, pin dùng đến 60 ngày - BH 12 tháng","shop":"Enchen.vn","cat":"Men's Care","sales":6222.63,"units":776,"orders":628,"views":6821,"oSales":7466.82,"oUnits":950,"isNew":false},{"pid":"18780125367","name":"Máy hút bụi cầm tay Deerma DX118C màu xám 3in1 đa năng lực hút 15000Pa quốc tế - Bảo hành 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":5988.86,"units":452,"orders":445,"views":6989,"oSales":84.89,"oUnits":6,"isNew":false}],"may":[{"pid":"24740059865","name":"Điện thoại POCO X7 Pro 5G (12+256GB) | Màn 6.67\" 120Hz AMOLED | 8400-Ultra | Camera 50MP | 6000mAh","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":43287.08,"units":183,"orders":182,"views":11742,"oSales":45200.8,"oUnits":196,"isNew":false},{"pid":"28413535505","name":"Simplus Máy xay cầm tay Cốc Đi Kèm Uống Trực Tiếp 400ML ZZJH008 - Bảo Hành 1 Năm 1 Đổi 1","shop":"Simplus Official Store","cat":"Kitchen Appliances","sales":3259.73,"units":304,"orders":298,"views":6967,"oSales":3718.81,"oUnits":338,"isNew":false},{"pid":"3167658907","name":"Máy hút bụi cầm tay Deerma DX118C lực hút 15000pa, công suất 600W với bộ lọc bụi mịn HEPA - Bảo hành 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":20839.37,"units":1496,"orders":1463,"views":24304,"oSales":18945.52,"oUnits":1457,"isNew":false},{"pid":"26221234933","name":"[Livestream] Điện thoại POCO X7 Pro 5G (8+256GB | 12+256GB) | Màn 6.67\" 120Hz AMOLED | D8400-Ultra","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":129242.42,"units":562,"orders":559,"views":27711,"oSales":85491.07,"oUnits":369,"isNew":false},{"pid":"19327801145","name":"Simplus Nồi Chiên Không Dầu Dung Tích 4L/5L lớn chiên nướng đa năng không dầu mỡ - Bảo Hành 1 Năm 1 Đổi 1  KQZG007","shop":"Simplus Official Store","cat":"Kitchen Appliances","sales":11079.68,"units":595,"orders":588,"views":14086,"oSales":6078.18,"oUnits":323,"isNew":false},{"pid":"56050860224","name":"[Độc Quyền Online] Điện thoại POCO F8 Pro | 12GB+512GB, Snapdragon® 8 Elite, pin 6210mAh, màn hình AMOLED 6.59'' 120Hz s","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":39643.57,"units":82,"orders":82,"views":9473,"oSales":13680.21,"oUnits":27,"isNew":false},{"pid":"49406574619","name":"Điện thoại thông minh Xiaomi 17 Ultra (12+512GB|16+1TB)| Pin 6000mAh (typ) siêu lớn| Ống kính Leica UltraPure","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":78006.37,"units":74,"orders":74,"views":6327,"oSales":9423.25,"oUnits":8,"isNew":false},{"pid":"44075695445","name":"Điện thoại Xiaomi 15 (12+512GB) | Màn 6.3\" AMOLED | 3 Camera Leica | Snapdragon 8 Elite HyperAI","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":148996.09,"units":286,"orders":286,"views":20716,"oSales":33577.46,"oUnits":63,"isNew":false},{"pid":"53057277264","name":"[KOL] Điện thoại XIAOMI POCO X8 Pro (8+256GB | 8+512GB | 12+512GB) | Màn 6.59\" 1,5K 120Hz - Bảo Hành 18 Tháng","shop":"MI Mall VN","cat":"Mobile Phones","sales":63890.98,"units":229,"orders":229,"views":14794,"oSales":null,"oUnits":null,"isNew":true},{"pid":"40514520161","name":"Xiaomi 15T | Thiết kế thân máy bo tròn thanh lịch | Màn hình 6.83\" bảo vệ mắt cùng tần số quét 120Hz","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":126649.23,"units":344,"orders":344,"views":26421,"oSales":211324.34,"oUnits":631,"isNew":false},{"pid":"29175945230","name":"[Livestream] Điện thoại Xiaomi 15 (12+256GB |12+512GB) | 3 Camera Leica | Snapdragon 8 Elite","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":148103.27,"units":283,"orders":283,"views":23294,"oSales":64980.18,"oUnits":126,"isNew":false},{"pid":"28122130767","name":"Máy hút bụi cầm tay Deerma DX120C đen lực hút 16000pa, công suất 600W phiên bản mới 2025 - Bảo hành 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":16687.22,"units":794,"orders":771,"views":12003,"oSales":13510.58,"oUnits":659,"isNew":false},{"pid":"46256441980","name":"[Livestream] Điện thoại POCO X8 Pro 5G (8+256GB| 8+512GB| 12+512GB) | Màn 6.59\" 1,5K | D8500U","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":93196.58,"units":316,"orders":316,"views":19467,"oSales":217602.28,"oUnits":794,"isNew":false},{"pid":"54151602054","name":"[New] Máy tính bảng POCO Pad M1 | 8GB+256GB, màn hình 12.1'' 120Hz 2.5K, pin khủng 12000mAh, Snapdragon® 7s Gen 4, hỗ tr","shop":"Xiaomi Official Store","cat":"Tablets","sales":58616.91,"units":301,"orders":218,"views":14881,"oSales":95444.46,"oUnits":494,"isNew":false},{"pid":"23783845394","name":"[Gift]Túi tote quà tặng PHILIPS- L 390✖250✖280mm","shop":"Philips Massager Official Store","cat":"Gift & Wrapping","sales":9.21,"units":800,"orders":400,"views":240,"oSales":null,"oUnits":null,"isNew":true},{"pid":"26523343160","name":"[Livestream] Điện thoại Redmi Note 14 Pro 5G (8+256GB) | Màn 6.67\" | MediaTek Dimensity 7300-Ultra | Camera 200MP AI","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":105858.19,"units":559,"orders":549,"views":11464,"oSales":15842.77,"oUnits":84,"isNew":false},{"pid":"4658197136","name":"Máy hút bụi cầm tay Deerma DX115C lực hút 15000Pa công suất 600W kèm 3 đầu hút đa năng chính hãng - Bảo hành 12 tháng","shop":"Deerma Official Store","cat":"Small Household Appliances","sales":6460.94,"units":466,"orders":443,"views":7252,"oSales":4022.56,"oUnits":298,"isNew":false},{"pid":"48656445603","name":"Điện thoại POCO X8 Pro 5G (8+256GB| 8+512GB| 12+512GB) | Màn 6.59\" 1,5K 120Hz | D8500U | 50MP","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":51879.57,"units":172,"orders":172,"views":13339,"oSales":154523.23,"oUnits":571,"isNew":false},{"pid":"45806590890","name":"Điện thoại thông minh Xiaomi 17 (12+256GB|12+512GB)|Pin 6330mAh (typ)| Ống kính Leica Summilux| Snapdragon 8 Elite Gen","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":166920.73,"units":250,"orders":250,"views":16115,"oSales":135899.97,"oUnits":202,"isNew":false},{"pid":"18086169596","name":"Máy cạo râu Enchen Mini 6 lưỡi dao kép mỏng, chống nước IPX7, pin sử dụng đến 2 tháng - BH 12 tháng","shop":"Enchen.vn","cat":"Men's Care","sales":8692.6,"units":1537,"orders":1487,"views":13550,"oSales":6859.24,"oUnits":1054,"isNew":false},{"pid":"28302772971","name":"Quạt cây đứng Aqua FED3501R, FED3502R thân cảm ứng, điều khiển từ xa, có hẹn giờ và thu dài ngắn","shop":"AQUA Small Home Appliance","cat":"Large Household Appliances","sales":10124.32,"units":377,"orders":374,"views":6237,"oSales":6957.96,"oUnits":249,"isNew":false},{"pid":"26971886951","name":"Điện thoại Redmi Note 14 Pro 5G (8+256GB) | Màn 6.67\" | SD 7SGen 3 | Camera 200MP","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":100888.0,"units":532,"orders":532,"views":16502,"oSales":null,"oUnits":null,"isNew":true},{"pid":"47855458277","name":"(Livestream) Điện thoại thông minh Xiaomi 17 (12+512GB|12+256GB)|Pin 6330mAh (typ)| Ống kính Leica Summilux|","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":66488.81,"units":98,"orders":98,"views":7916,"oSales":60300.47,"oUnits":90,"isNew":false},{"pid":"42312594014","name":"[New] POCO C85｜Pin khủng 6000mAh (typ)｜Lên đến 22 giờ xem video｜Màn hình lớn 6.9\"sống động｜Sạc nhanh 33W","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":147867.6,"units":1624,"orders":1623,"views":17927,"oSales":49379.93,"oUnits":486,"isNew":false},{"pid":"46456098642","name":"Điện thoại thông minh POCO X8 PRO| Pin cực lớn 6500mAh(typ) sạc nhanh 100W| Màn hình AMOLED 1.5K 120Hz","shop":"Xiaomi Official Store","cat":"Mobile Phones","sales":326555.28,"units":1087,"orders":1078,"views":62293,"oSales":1107112.77,"oUnits":4078,"isNew":false},{"pid":"50101925691","name":"[Livestream] Điện thoại POCO F8 Pro 12+512GB | Màn POCO HyperRGB AMOLED 6.59\" 120Hz | Snapdragon 8 Elite","shop":"Xiaomi Mobile Authorized Store","cat":"Mobile Phones","sales":39013.94,"units":81,"orders":81,"views":8535,"oSales":7479.03,"oUnits":15,"isNew":false},{"pid":"19461490320","name":"Simplus Bàn ủi hơi nước cầm tay gấp gọn tiện lợi Tay cầm gấp gọn 90° 1200W Bình chứa nước 180ml GTJH020","shop":"Simplus Official Store","cat":"Small Household Appliances","sales":14637.57,"units":1243,"orders":1232,"views":19488,"oSales":17008.23,"oUnits":1484,"isNew":false},{"pid":"27354479852","name":"Máy cạo râu Enchen K8 đầu cạo 2D chống nước, 18 lưỡi dao tự mài, pin dùng đến 60 ngày - BH 12 tháng","shop":"Enchen.vn","cat":"Men's Care","sales":7466.82,"units":950,"orders":792,"views":9141,"oSales":6222.63,"oUnits":776,"isNew":false}]}, LS={"jun":{"tot":{"gmv":1372632.4191110043,"orders":22647,"items":24651,"sessions":488,"streamers":293,"cost":226404.9841786892},"byType":[{"k":"Seller","gmv":773542.02,"orders":5485,"sess":61},{"k":"KOL","gmv":586644.93,"orders":16072,"sess":422},{"k":"OA","gmv":12445.47,"orders":1090,"sess":5}],"byCat":[{"k":"Mobile & Gadgets","gmv":1136926.33,"orders":11811,"sess":171},{"k":"Home Appliances","gmv":206211.88,"orders":9062,"sess":232},{"k":"Health","gmv":18597.68,"orders":495,"sess":43},{"k":"Beauty","gmv":10518.14,"orders":1203,"sess":132},{"k":"Home & Living","gmv":378.39,"orders":76,"sess":31}],"byDay":[{"k":"06-05","gmv":683214.17,"orders":6123},{"k":"06-06","gmv":689418.25,"orders":16524}],"top":[{"id":"1525818206","type":"Seller","name":"Xiaomi Official Store","gmv":515397.97,"orders":2223,"items":2391,"sess":8,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1382362517","type":"KOL","name":"Tuấn Dương (12H) x Guest / Lucie","gmv":157520.63,"orders":893,"items":958,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"16232519","type":"KOL","name":"Võ Hà Linh","gmv":151932.7,"orders":11639,"items":11812,"sess":1,"shop":"Vention Official Store","cat":"Home Appliances"},{"id":"1361838348","type":"KOL","name":"MinhTú (14H) x Guest","gmv":151254.72,"orders":970,"items":1027,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"340451250","type":"Seller","name":"Xiaomi Mobile Authorized Store","gmv":118958.14,"orders":434,"items":710,"sess":7,"shop":"Xiaomi Mobile Authorized Store","cat":"Mobile & Gadgets"},{"id":"1317093109","type":"Seller","name":"Quang Trung (4H) x Đinh Ngọc Diệp (4H) x Quỳnh Lý (6H)_1 / Quang Trung (4H) x Đinh Ngọc Diệp (4H) x Quỳnh Lý (6H)_2 / Võ Hoàng Yến (4H) x Đinh Ngọc Diệp (4H) x Will (6H)","gmv":69275.35,"orders":324,"items":366,"sess":3,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"324896661","type":"Seller","name":"Deerma Official Store","gmv":14546.88,"orders":440,"items":555,"sess":3,"shop":"Deerma Official Store","cat":"Home Appliances"},{"id":"497383843","type":"Seller","name":"Simplus Official Store","gmv":13002.02,"orders":891,"items":1024,"sess":5,"shop":"Simplus Official Store","cat":"Home Appliances"},{"id":"1756170","type":"OA","name":null,"gmv":12445.47,"orders":1090,"items":1271,"sess":5,"shop":"Simplus Official Store","cat":"Home Appliances"},{"id":"1059995742","type":"Seller","name":null,"gmv":9925.59,"orders":247,"items":354,"sess":2,"shop":"Perysmith Vietnam Store","cat":"Home Appliances"},{"id":"1427686623","type":"KOL","name":"Thúy Ngân (6H) x Quỳnh Lý (6H)","gmv":7120.35,"orders":65,"items":79,"sess":2,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"584870092","type":"Seller","name":null,"gmv":7033.11,"orders":124,"items":155,"sess":6,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"}],"kol":[{"id":"1382362517","names":["Tuấn Dương (12H) x Guest","Lucie"],"multi":true,"gmv":157520.63,"orders":893,"items":958,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"16232519","names":["Võ Hà Linh"],"multi":false,"gmv":151932.7,"orders":11639,"items":11812,"sess":1,"shop":"Vention Official Store","cat":"Home Appliances"},{"id":"1361838348","names":["MinhTú (14H) x Guest"],"multi":false,"gmv":151254.72,"orders":970,"items":1027,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1317093109","names":["Quang Trung (4H) x Đinh Ngọc Diệp (4H) x Quỳnh Lý (6H)_1","Quang Trung (4H) x Đinh Ngọc Diệp (4H) x Quỳnh Lý (6H)_2","Võ Hoàng Yến (4H) x Đinh Ngọc Diệp (4H) x Will (6H)"],"multi":true,"gmv":69275.35,"orders":324,"items":366,"sess":3,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1427686623","names":["Thúy Ngân (6H) x Quỳnh Lý (6H)"],"multi":false,"gmv":7120.35,"orders":65,"items":79,"sess":2,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1105980528","names":["Hannah Olala"],"multi":false,"gmv":5993.85,"orders":145,"items":168,"sess":2,"shop":"Deerma Official Store","cat":"Home Appliances"},{"id":"1331660521","names":["PewPew (6H)"],"multi":false,"gmv":2342.59,"orders":24,"items":27,"sess":3,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1469820681","names":["Khổng Tú Quỳnh x Trương Quỳnh Anh x Thiều Bảo Trâm"],"multi":false,"gmv":191.16,"orders":11,"items":11,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1150428858","names":["Diệp Lê (12H) x Guest","Diệp Lê"],"multi":true,"gmv":0,"orders":0,"items":0,"sess":0,"shop":"—","cat":"—","nodata":true}],"kolTot":545631.35},"may":{"tot":{"gmv":1515554.8169399034,"orders":15282,"items":16717,"sessions":606,"streamers":390,"cost":182364.33085179998},"byType":[{"k":"KOL","gmv":876229.62,"orders":10556,"sess":537},{"k":"Seller","gmv":638781.43,"orders":4684,"sess":64},{"k":"OA","gmv":543.77,"orders":42,"sess":5}],"byCat":[{"k":"Mobile & Gadgets","gmv":1311313.91,"orders":6610,"sess":208},{"k":"Home Appliances","gmv":175599.7,"orders":6517,"sess":263},{"k":"Health","gmv":14501.02,"orders":342,"sess":59},{"k":"Beauty","gmv":13426.55,"orders":1709,"sess":181},{"k":"Home & Living","gmv":713.64,"orders":104,"sess":34}],"byDay":[{"k":"05-04","gmv":1006704.3,"orders":10581},{"k":"05-05","gmv":508850.52,"orders":4701}],"top":[{"id":"1525818206","type":"Seller","name":"Xiaomi Official Store","gmv":394598.82,"orders":1626,"items":1775,"sess":7,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1150428858","type":"KOL","name":"DIỆP LÊ / Diệp Lê (10H) x guest","gmv":340866.08,"orders":4372,"items":4617,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1382362517","type":"KOL","name":"Lucie Nguyễn","gmv":161543.83,"orders":988,"items":1043,"sess":1,"shop":"Xiaomi Mobile Authorized Store","cat":"Mobile & Gadgets"},{"id":"340451250","type":"Seller","name":"Xiaomi Mobile Authorized Store","gmv":138503.5,"orders":472,"items":507,"sess":4,"shop":"Xiaomi Mobile Authorized Store","cat":"Mobile & Gadgets"},{"id":"1547014738","type":"KOL","name":"Sam","gmv":73533.06,"orders":758,"items":790,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1361838348","type":"KOL","name":"Minh Tú (14H)","gmv":69442.38,"orders":613,"items":658,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1331660521","type":"KOL","name":"PewPew (13H)","gmv":62235.98,"orders":798,"items":831,"sess":3,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"263833059","type":"Seller","name":null,"gmv":17101.96,"orders":233,"items":258,"sess":6,"shop":"MI Mall VN","cat":"Mobile & Gadgets"},{"id":"80574295","type":"KOL","name":null,"gmv":16044.11,"orders":204,"items":232,"sess":3,"shop":"Xiaomi Mobile Authorized Store","cat":"Mobile & Gadgets"},{"id":"1168162987","type":"Seller","name":"MI Mall VN","gmv":15318.32,"orders":123,"items":128,"sess":6,"shop":"MI Mall VN","cat":"Mobile & Gadgets"},{"id":"1341717867","type":"Seller","name":"Toshiba Premium Store","gmv":14597.79,"orders":33,"items":33,"sess":4,"shop":"Toshiba Premium Store","cat":"Home Appliances"},{"id":"584870092","type":"Seller","name":null,"gmv":13109.31,"orders":192,"items":212,"sess":6,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"}],"kol":[{"id":"1525818206","names":["Xiaomi Official Store"],"multi":false,"gmv":394598.82,"orders":1626,"items":1775,"sess":7,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1150428858","names":["DIỆP LÊ","Diệp Lê (10H) x guest"],"multi":true,"gmv":340866.08,"orders":4372,"items":4617,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1382362517","names":["Lucie Nguyễn"],"multi":false,"gmv":161543.83,"orders":988,"items":1043,"sess":1,"shop":"Xiaomi Mobile Authorized Store","cat":"Mobile & Gadgets"},{"id":"340451250","names":["Xiaomi Mobile Authorized Store"],"multi":false,"gmv":138503.5,"orders":472,"items":507,"sess":4,"shop":"Xiaomi Mobile Authorized Store","cat":"Mobile & Gadgets"},{"id":"1547014738","names":["Sam"],"multi":false,"gmv":73533.06,"orders":758,"items":790,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1361838348","names":["Minh Tú (14H)"],"multi":false,"gmv":69442.38,"orders":613,"items":658,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1331660521","names":["PewPew (13H)"],"multi":false,"gmv":62235.98,"orders":798,"items":831,"sess":3,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1168162987","names":["MI Mall VN"],"multi":false,"gmv":15318.32,"orders":123,"items":128,"sess":6,"shop":"MI Mall VN","cat":"Mobile & Gadgets"},{"id":"1341717867","names":["Toshiba Premium Store"],"multi":false,"gmv":14597.79,"orders":33,"items":33,"sess":4,"shop":"Toshiba Premium Store","cat":"Home Appliances"},{"id":"497383843","names":["Simplus Official Store"],"multi":false,"gmv":11390.8,"orders":765,"items":805,"sess":4,"shop":"Simplus Official Store","cat":"Home Appliances"},{"id":"1059995742","names":["Perysmith Vietnam Store"],"multi":false,"gmv":10559.23,"orders":260,"items":354,"sess":3,"shop":"Perysmith Vietnam Store","cat":"Home Appliances"},{"id":"1105980528","names":["Hannah Olala"],"multi":false,"gmv":9622.93,"orders":267,"items":275,"sess":2,"shop":"Deerma Official Store","cat":"Home Appliances"},{"id":"324896661","names":["Deerma Official Store"],"multi":false,"gmv":8858.07,"orders":339,"items":377,"sess":1,"shop":"Deerma Official Store","cat":"Home Appliances"},{"id":"1312775745","names":["Thuý Ngân (6H) x Sĩ Thanh (4H) x Quỳnh Lý (6H)"],"multi":false,"gmv":6567.21,"orders":36,"items":47,"sess":1,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"979484151","names":["Philips Massager Official Store"],"multi":false,"gmv":5528.11,"orders":130,"items":245,"sess":2,"shop":"Philips Massager Official Store","cat":"Health"},{"id":"1626158726","names":["Vention Official Store"],"multi":false,"gmv":3367.79,"orders":342,"items":430,"sess":4,"shop":"Vention Official Store","cat":"Mobile & Gadgets"},{"id":"1291518965","names":["EYSIN Vietnam Store"],"multi":false,"gmv":3027.8,"orders":79,"items":106,"sess":2,"shop":"EYSIN Vietnam Store","cat":"Home Appliances"},{"id":"1317093109","names":["Ngọc Phước","Quang Trung (4H) x Liêu Hà Trinh (8H)","Dương Quốc Mỹ (6H) x Liêu Hà Trinh (4H) x Quỳnh Lương (2H)","Ninh Dương Story"],"multi":true,"gmv":1950.23,"orders":32,"items":32,"sess":2,"shop":"Xiaomi Official Store","cat":"Mobile & Gadgets"},{"id":"1229361548","names":["SimplusPink"],"multi":false,"gmv":339.97,"orders":27,"items":29,"sess":1,"shop":"SimplusPink","cat":"Beauty"}],"kolTot":1331851.9}};
+const PERIOD={jun:'05–06 Jun 2026',may:'04–05 May 2026',compare:'June 6.6 vs May 5.5'};
+const fmtUSD=v=>{if(Math.abs(v)>=1e6)return '$'+(v/1e6).toFixed(2)+'M';if(Math.abs(v)>=1e3)return '$'+(v/1e3).toFixed(0)+'K';return '$'+v.toFixed(0);};
+const fmtUSD2=v=>'$'+v.toLocaleString('en-US',{maximumFractionDigits:0});
+const fmtInt=v=>v.toLocaleString('en-US');
+const pct=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
+const pp=v=>(v>=0?'+':'')+v.toFixed(1)+'pp';
+const sum=(a,k)=>a.reduce((x,b)=>x+b[k],0);
+const shortName=n=>{let s=n.replace(/^\[[^\]]*\]\s*/,'').replace(/^\([^)]*\)\s*/,'');s=s.split(/[|｜]/)[0].trim();return s.length>46?s.slice(0,44)+'…':s;};
+const cleanShop=n=>n.replace(/ (Official |Authorized )?Store$/,'');
+const g=(j,m)=>(j-m)/m*100;
+
+function totals(key){const a=DATA[key];const t={sales:sum(a,'sales'),orders:sum(a,'orders'),units:sum(a,'units'),cost:sum(a,'cost'),seller:sum(a,'seller_sales')};t.aov=t.sales/t.orders;t.cr=t.cost/t.sales*100;t.upo=t.units/t.orders;return t;}
+const TJ=totals('jun'), TM=totals('may');
+
+let mode='jun', skuMetric='sales', skuSortK='sales', skuSortDir=-1, stSortK=null, stSortDir=-1;
+
+/* ---------- KPI ---------- */
+function renderKPI(){
+  const k=document.getElementById('kpis');
+  if(mode==='compare'){
+    const defs=[
+      {lab:'Revenue (USD)',v:fmtUSD(TJ.sales),p:'May: '+fmtUSD(TM.sales),d:g(TJ.sales,TM.sales)},
+      {lab:'Orders',v:fmtInt(TJ.orders),p:'May: '+fmtInt(TM.orders),d:g(TJ.orders,TM.orders)},
+      {lab:'AOV / order',v:fmtUSD2(TJ.aov),p:'May: '+fmtUSD2(TM.aov),d:g(TJ.aov,TM.aov),inv:1},
+      {lab:'Units sold',v:fmtInt(TJ.units),p:'May: '+fmtInt(TM.units),d:g(TJ.units,TM.units)},
+      {lab:'Seller GMV',v:fmtUSD(TJ.seller),p:'May: '+fmtUSD(TM.seller),d:g(TJ.seller,TM.seller),c:'alt'},
+      {lab:'Promo cost',v:fmtUSD(TJ.cost),p:'May: '+fmtUSD(TM.cost),d:g(TJ.cost,TM.cost),c:'alt',inv:1},
+      {lab:'Cost / Revenue',v:TJ.cr.toFixed(1)+'%',p:'May: '+TM.cr.toFixed(1)+'%',d:TJ.cr-TM.cr,c:'alt',pp:1,inv:1},
+      {lab:'Units / order',v:TJ.upo.toFixed(2),p:'May: '+TM.upo.toFixed(2),d:g(TJ.upo,TM.upo)},
+    ];
+    k.innerHTML=defs.map(d=>{const txt=d.pp?pp(d.d):pct(d.d);let cls=d.d>=0?'pos':'neg';if(d.inv)cls=d.d>=0?'warn':'pos';const ar=d.d>=0?'\u25B2':'\u25BC';
+      return '<div class="kpi '+(d.c||'')+'"><div class="lab">'+d.lab+'</div><div class="big num">'+d.v+'</div><div class="prev num">'+d.p+'</div><div class="delta '+cls+'">'+ar+' '+txt+'</div></div>';}).join('');
+  } else {
+    const t=mode==='jun'?TJ:TM; const mc=mode==='may'?'may':'';
+    const defs=[
+      {lab:'Revenue (USD)',v:fmtUSD(t.sales)},{lab:'Orders',v:fmtInt(t.orders)},
+      {lab:'AOV / order',v:fmtUSD2(t.aov)},{lab:'Units sold',v:fmtInt(t.units)},
+      {lab:'Seller GMV',v:fmtUSD(t.seller),c:'alt'},{lab:'Promo cost',v:fmtUSD(t.cost),c:'alt'},
+      {lab:'Cost / Revenue',v:t.cr.toFixed(1)+'%',c:'alt'},{lab:'Units / order',v:t.upo.toFixed(2)},
+    ];
+    k.innerHTML=defs.map(d=>'<div class="kpi '+(d.c||'')+' '+mc+'"><div class="lab">'+d.lab+'</div><div class="big num">'+d.v+'</div><div class="prev">across 20 stores</div></div>').join('');
+  }
+}
+
+/* ---------- Daily ---------- */
+function renderDaily(){
+  const el=document.getElementById('daily'), lg=document.getElementById('dailyLgnd'), note=document.getElementById('dailyNote');
+  const maxD=Math.max(...[...DATA.daily.jun,...DATA.daily.may].map(d=>d.sales));
+  if(mode==='compare'){
+    note.textContent='Day 2 is the peak of both campaigns (USD)';
+    const dp=[{x:'Day 1',m:DATA.daily.may[0],j:DATA.daily.jun[0]},{x:'Day 2',m:DATA.daily.may[1],j:DATA.daily.jun[1]}];
+    el.innerHTML=dp.map(p=>'<div class="dgrp"><div class="dbars">'
+      +'<div class="db m" style="height:0" data-h="'+(p.m.sales/maxD*100)+'"><span class="v num">'+fmtUSD(p.m.sales)+'</span></div>'
+      +'<div class="db j" style="height:0" data-h="'+(p.j.sales/maxD*100)+'"><span class="v num">'+fmtUSD(p.j.sales)+'</span></div>'
+      +'</div><div class="dxlab">'+p.x+'</div></div>').join('');
+    lg.innerHTML='<span><span class="dotM"></span>May</span><span><span class="dotJ"></span>June</span>';
+  } else {
+    note.textContent=(mode==='jun'?'Day 1 (Jun 5) → Day 2 (Jun 6), USD':'Day 1 (May 4) → Day 2 (May 5), USD');
+    const dd=DATA.daily[mode]; const mx=Math.max(...dd.map(d=>d.sales)); const cls=mode==='jun'?'j':'m';
+    el.innerHTML=dd.map((p,i)=>'<div class="dgrp"><div class="dbars">'
+      +'<div class="db '+cls+'" style="height:0;width:46px" data-h="'+(p.sales/mx*100)+'"><span class="v num">'+fmtUSD(p.sales)+'</span></div>'
+      +'</div><div class="dxlab">Day '+(i+1)+'</div></div>').join('');
+    lg.innerHTML='';
+  }
+  setTimeout(()=>document.querySelectorAll('.db').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+}
+
+/* ---------- Top stores ---------- */
+function renderTop(){
+  const el=document.getElementById('topbars'), note=document.getElementById('topNote');
+  if(mode==='compare'){
+    note.textContent='June vs May, revenue in USD';
+    const mapM={};DATA.may.forEach(s=>mapM[s.name]=s);
+    const t=[...DATA.jun].sort((a,b)=>b.sales-a.sales).slice(0,8);
+    const mx=Math.max(...t.map(r=>Math.max(r.sales,(mapM[r.name]||{sales:0}).sales)));
+    el.innerHTML=t.map(r=>{const m=mapM[r.name]||{sales:0};const mom=g(r.sales,m.sales);
+      return '<div class="barrow"><div class="blab"><b>'+cleanShop(r.name)+'</b><span class="num mom '+(mom>=0?'pos':'neg')+'">'+pct(mom)+'</span></div><div class="track"><div class="bg"></div><div class="fillM" style="width:0" data-w="'+(m.sales/mx*100)+'"></div><div class="fillJ" style="width:0" data-w="'+(r.sales/mx*100)+'"></div></div></div>';}).join('');
+  } else {
+    note.textContent=(mode==='jun'?'June revenue by store (USD)':'May revenue by store (USD)');
+    const t=[...DATA[mode]].sort((a,b)=>b.sales-a.sales).slice(0,8);const tot=mode==='jun'?TJ.sales:TM.sales;
+    const mx=Math.max(...t.map(r=>r.sales));const col=mode==='jun'?'var(--accent)':'var(--mayc)';
+    el.innerHTML=t.map(r=>'<div class="barrow"><div class="blab"><b>'+cleanShop(r.name)+'</b><span class="num" style="color:var(--muted);font-weight:600">'+(r.sales/tot*100).toFixed(1)+'%</span></div><div class="track"><div class="bg"></div><div class="fillS" style="width:0;background:'+col+'" data-w="'+(r.sales/mx*100)+'"></div></div></div>').join('');
+  }
+  setTimeout(()=>document.querySelectorAll('.fillM,.fillJ,.fillS').forEach(b=>b.style.width=b.dataset.w+'%'),90);
+}
+
+/* ---------- Store table ---------- */
+function renderStore(){
+  const thead=document.getElementById('thead'),tbody=document.getElementById('tbody'),tfoot=document.getElementById('tfoot');
+  if(mode==='compare'){
+    if(stSortK===null){stSortK='salesJ';}
+    const mapM={};DATA.may.forEach(s=>mapM[s.name]=s);
+    const R=DATA.jun.map(j=>{const m=mapM[j.name]||{sales:0,orders:0};const aovJ=j.sales/j.orders,aovM=m.orders?m.sales/m.orders:0;
+      return {name:j.name,salesJ:j.sales,salesM:m.sales,salesMoM:m.sales?g(j.sales,m.sales):0,ordersJ:j.orders,ordersMoM:m.orders?g(j.orders,m.orders):0,aovJ,aovMoM:aovM?g(aovJ,aovM):0,crJ:j.cost/j.sales*100};});
+    const cols=[['name','Store','l'],['salesJ','Rev Jun'],['salesM','Rev May'],['salesMoM','Rev %'],['ordersJ','Ord Jun'],['ordersMoM','Ord %'],['aovJ','AOV Jun'],['aovMoM','AOV %'],['crJ','Cost/Rev']];
+    thead.innerHTML='<tr>'+cols.map(c=>'<th class="sortable '+(c[2]||'')+'" data-k="'+c[0]+'">'+c[1]+'</th>').join('')+'</tr>';
+    R.sort((a,b)=>{const x=a[stSortK],y=b[stSortK];return typeof x==='string'?stSortDir*x.localeCompare(y):stSortDir*(x-y);});
+    const mx=Math.max(...R.map(r=>r.salesJ));
+    tbody.innerHTML=R.map(r=>'<tr><td class="l shop">'+r.name+'</td><td class="num">'+fmtUSD2(r.salesJ)+' <span class="minibar" style="width:'+Math.max(2,r.salesJ/mx*42)+'px"></span></td><td class="num">'+fmtUSD2(r.salesM)+'</td><td class="num mom '+(r.salesMoM>=0?'pos':'neg')+'">'+pct(r.salesMoM)+'</td><td class="num">'+fmtInt(r.ordersJ)+'</td><td class="num mom '+(r.ordersMoM>=0?'pos':'neg')+'">'+pct(r.ordersMoM)+'</td><td class="num">'+fmtUSD2(r.aovJ)+'</td><td class="num mom '+(r.aovMoM>=0?'pos':'neg')+'">'+pct(r.aovMoM)+'</td><td class="num">'+r.crJ.toFixed(1)+'%</td></tr>').join('');
+    tfoot.innerHTML='<tr><td class="l">TOTAL (20)</td><td class="num">'+fmtUSD2(TJ.sales)+'</td><td class="num">'+fmtUSD2(TM.sales)+'</td><td class="num mom '+(g(TJ.sales,TM.sales)>=0?'pos':'neg')+'">'+pct(g(TJ.sales,TM.sales))+'</td><td class="num">'+fmtInt(TJ.orders)+'</td><td class="num mom '+(g(TJ.orders,TM.orders)>=0?'pos':'neg')+'">'+pct(g(TJ.orders,TM.orders))+'</td><td class="num">'+fmtUSD2(TJ.aov)+'</td><td class="num mom '+(g(TJ.aov,TM.aov)>=0?'pos':'neg')+'">'+pct(g(TJ.aov,TM.aov))+'</td><td class="num">'+TJ.cr.toFixed(1)+'%</td></tr>';
+  } else {
+    if(stSortK===null)stSortK='sales';
+    const t=mode==='jun'?TJ:TM; const oKey=mode==='jun'?'may':'jun'; const tO=oKey==='jun'?TJ:TM;
+    const mapO={};DATA[oKey].forEach(s=>mapO[s.name]=s);
+    const thisLab=mode==='jun'?'Rev Jun':'Rev May', otherLab=mode==='jun'?'Rev May':'Rev Jun';
+    const R=DATA[mode].map(s=>{const o=mapO[s.name]||{sales:0};return {name:s.name,sales:s.sales,salesO:o.sales,mom:o.sales?g(s.sales,o.sales):0,orders:s.orders,units:s.units,aov:s.orders?s.sales/s.orders:0};});
+    const cols=[['name','Store','l'],['sales',thisLab],['salesO',otherLab],['mom','MoM %'],['orders','Orders'],['units','Units'],['aov','AOV']];
+    thead.innerHTML='<tr>'+cols.map(c=>'<th class="sortable '+(c[2]||'')+'" data-k="'+c[0]+'">'+c[1]+'</th>').join('')+'</tr>';
+    R.sort((a,b)=>{const x=a[stSortK],y=b[stSortK];return typeof x==='string'?stSortDir*x.localeCompare(y):stSortDir*(x-y);});
+    const mx=Math.max(...R.map(r=>r.sales));
+    tbody.innerHTML=R.map(r=>'<tr><td class="l shop">'+r.name+'</td><td class="num">'+fmtUSD2(r.sales)+' <span class="minibar" style="width:'+Math.max(2,r.sales/mx*42)+'px"></span></td><td class="num">'+fmtUSD2(r.salesO)+'</td><td class="num mom '+(r.mom>=0?'pos':'neg')+'">'+pct(r.mom)+'</td><td class="num">'+fmtInt(r.orders)+'</td><td class="num">'+fmtInt(r.units)+'</td><td class="num">'+fmtUSD2(r.aov)+'</td></tr>').join('');
+    tfoot.innerHTML='<tr><td class="l">TOTAL (20)</td><td class="num">'+fmtUSD2(t.sales)+'</td><td class="num">'+fmtUSD2(tO.sales)+'</td><td class="num mom '+(g(t.sales,tO.sales)>=0?'pos':'neg')+'">'+pct(g(t.sales,tO.sales))+'</td><td class="num">'+fmtInt(t.orders)+'</td><td class="num">'+fmtInt(t.units)+'</td><td class="num">'+fmtUSD2(t.aov)+'</td></tr>';
+  }
+  thead.querySelectorAll('th.sortable').forEach(th=>{if(th.dataset.k===stSortK)th.classList.add(stSortDir>0?'asc':'desc');
+    th.addEventListener('click',()=>{const kk=th.dataset.k;if(stSortK===kk)stSortDir*=-1;else{stSortK=kk;stSortDir=(kk==='name')?1:-1;}renderStore();});});
+}
+
+/* ---------- SKU table ---------- */
+function renderSKU(){
+  const head=document.getElementById('skuhead'),body=document.getElementById('skubody');
+  document.getElementById('skuTitle').textContent='Top 15 SKUs — '+(mode==='may'?'May':(mode==='compare'?'June (vs May)':'June'));
+  if(mode==='compare'){
+    const validC=['name','sales','units','orders','views','oSales','momV']; if(!validC.includes(skuSortK))skuSortK=skuMetric;
+    document.getElementById('skuNote').innerHTML='Top 15 by '+(skuMetric==='sales'?'revenue':'units')+' in the 6.6 window, with the same SKU\u2019s 5.5 revenue. <span class="badge">NEW</span> = no sales in 5.5.';
+    const cols=[['_','#','l'],['name','Product','l'],['sales','Rev Jun'],['units','Units'],['orders','Orders'],['views','Views'],['oSales','Rev May'],['momV','Rev MoM']];
+    head.innerHTML='<tr>'+cols.map(c=>c[0]==='_'?'<th class="l" style="width:32px">#</th>':'<th class="sortable '+(c[2]||'')+'" data-k="'+c[0]+'">'+c[1]+'</th>').join('')+'</tr>';
+    let pool=[...SKU.jun]; pool.forEach(s=>s.momV=s.isNew?Infinity:(s.oSales?g(s.sales,s.oSales):0));
+    pool.sort((a,b)=>b[skuMetric]-a[skuMetric]); pool=pool.slice(0,15);
+    pool.sort((a,b)=>{let x=a[skuSortK],y=b[skuSortK];if(typeof x==='string')return skuSortDir*x.localeCompare(y);if(x===Infinity)x=1e9;if(y===Infinity)y=1e9;return skuSortDir*(x-y);});
+    const mx=Math.max(...pool.map(r=>r.sales));
+    body.innerHTML=pool.map((r,i)=>{const mom=r.isNew?'<span class="badge">NEW</span>':'<span class="num mom '+(r.momV>=0?'pos':'neg')+'">'+pct(r.momV)+'</span>';
+      return '<tr><td class="l rank">'+(i+1)+'</td><td class="l"><div class="pname"><b title="'+r.name.replace(/"/g,'&quot;')+'">'+shortName(r.name)+'</b><span class="pmeta">'+cleanShop(r.shop)+(r.cat&&r.cat!=='nan'?' · <span class="cattag">'+r.cat+'</span>':'')+'</span></div></td><td class="num">'+fmtUSD2(r.sales)+' <span class="minibar" style="width:'+Math.max(2,r.sales/mx*38)+'px"></span></td><td class="num">'+fmtInt(r.units)+'</td><td class="num">'+fmtInt(r.orders)+'</td><td class="num">'+fmtInt(r.views)+'</td><td class="num">'+(r.isNew?'—':fmtUSD2(r.oSales))+'</td><td class="num">'+mom+'</td></tr>';}).join('');
+  } else {
+    const validK=['name','sales','oSales','units','oUnits']; if(!validK.includes(skuSortK))skuSortK=skuMetric;
+    document.getElementById('skuNote').innerHTML='Top 15 SKUs by '+(skuMetric==='sales'?'revenue':'units')+' for the '+(mode==='jun'?'6.6 (Jun 5–6)':'5.5 (May 4–5)')+' window. <span class="badge">NEW</span> = no sales in the other month.';
+    const thisR=mode==='jun'?'Rev Jun':'Rev May', otherR=mode==='jun'?'Rev May':'Rev Jun', thisU=mode==='jun'?'Units Jun':'Units May', otherU=mode==='jun'?'Units May':'Units Jun';
+    const cols=[['_','#'],['name','Product','l'],['sales',thisR],['oSales',otherR],['units',thisU],['oUnits',otherU]];
+    head.innerHTML='<tr>'+cols.map(c=>c[0]==='_'?'<th class="l" style="width:32px">#</th>':'<th class="sortable '+(c[2]||'')+'" data-k="'+c[0]+'">'+c[1]+'</th>').join('')+'</tr>';
+    let pool=[...SKU[mode]]; pool.sort((a,b)=>b[skuMetric]-a[skuMetric]); pool=pool.slice(0,15);
+    pool.sort((a,b)=>{let x=a[skuSortK],y=b[skuSortK];if(x==null)x=-1;if(y==null)y=-1;return typeof x==='string'?skuSortDir*x.localeCompare(y):skuSortDir*(x-y);});
+    const mx=Math.max(...pool.map(r=>r.sales)); const col=mode==='jun'?'var(--accent)':'var(--mayc)';
+    body.innerHTML=pool.map((r,i)=>'<tr><td class="l rank">'+(i+1)+'</td><td class="l"><div class="pname"><b title="'+r.name.replace(/"/g,'&quot;')+'">'+shortName(r.name)+'</b><span class="pmeta">'+cleanShop(r.shop)+(r.cat&&r.cat!=='nan'?' · <span class="cattag">'+r.cat+'</span>':'')+'</span></div></td><td class="num">'+fmtUSD2(r.sales)+' <span class="minibar" style="width:'+Math.max(2,r.sales/mx*38)+'px;background:'+col+'"></span></td><td class="num">'+(r.isNew?'<span class="badge">NEW</span>':fmtUSD2(r.oSales))+'</td><td class="num">'+fmtInt(r.units)+'</td><td class="num">'+(r.isNew?'—':fmtInt(r.oUnits))+'</td></tr>').join('');
+  }
+  head.querySelectorAll('th.sortable').forEach(th=>{if(th.dataset.k===skuSortK)th.classList.add(skuSortDir>0?'asc':'desc');
+    th.addEventListener('click',()=>{const kk=th.dataset.k;if(skuSortK===kk)skuSortDir*=-1;else{skuSortK=kk;skuSortDir=-1;}renderSKU();});});
+}
+
+/* ---------- Read-out ---------- */
+function renderInsight(){
+  const el=document.getElementById('insight');
+  if(mode==='compare'){
+    const mapM={};DATA.may.forEach(s=>mapM[s.name]=s);
+    const R=DATA.jun.map(j=>{const m=mapM[j.name]||{sales:0};return{name:j.name,sales:j.sales,salesM:m.sales,mom:m.sales?g(j.sales,m.sales):0};}).filter(r=>r.salesM>5000);
+    const tg=[...R].sort((a,b)=>b.mom-a.mom)[0], td=[...R].sort((a,b)=>a.mom-b.mom)[0];
+    el.innerHTML='The <b>6.6</b> campaign generated <b class="pill">'+fmtUSD(TJ.sales)+'</b> ('+pct(g(TJ.sales,TM.sales))+' vs 5.5), driven by orders <b>'+pct(g(TJ.orders,TM.orders))+'</b>. But AOV fell <b>'+Math.abs(g(TJ.aov,TM.aov)).toFixed(1)+'%</b> to '+fmtUSD2(TJ.aov)+' and promo cost rose <b>'+pct(g(TJ.cost,TM.cost))+'</b>, lifting Cost/Revenue from '+TM.cr.toFixed(1)+'% to <b>'+TJ.cr.toFixed(1)+'%</b> ('+pp(TJ.cr-TM.cr)+'). Top mover: <b>'+cleanShop(tg.name)+'</b> ('+pct(tg.mom)+'); watch: <b>'+cleanShop(td.name)+'</b> ('+pct(td.mom)+').';
+  } else {
+    const t=mode==='jun'?TJ:TM; const lbl=mode==='jun'?'6.6 (Jun 5–6)':'5.5 (May 4–5)';
+    const ts=[...DATA[mode]].sort((a,b)=>b.sales-a.sales)[0];
+    const tsku=[...SKU[mode]].sort((a,b)=>b.sales-a.sales)[0];
+    el.innerHTML='In the <b>'+lbl+'</b> window, 20 stores generated <b class="pill">'+fmtUSD(t.sales)+'</b> across <b>'+fmtInt(t.orders)+'</b> orders (AOV '+fmtUSD2(t.aov)+'), at a Cost/Revenue of <b>'+t.cr.toFixed(1)+'%</b>. Lead store: <b>'+cleanShop(ts.name)+'</b> ('+fmtUSD(ts.sales)+', '+(ts.sales/t.sales*100).toFixed(0)+'% of revenue). Top SKU: <b>'+shortName(tsku.name)+'</b> at '+fmtUSD(tsku.sales)+'.';
+  }
+}
+
+function renderLS(){
+  const sec=document.getElementById('lsSection'); sec.style.display='';
+  const cmp=(mode==='compare'); const key=cmp?'jun':mode; const d=LS[key]; const t=d.tot;
+  document.getElementById('lsSecTitle').textContent='KOL Livestream — '+(key==='jun'?'June (6.6)':'May (5.5)')+(cmp?'  ·  vs May':'');
+  // KPIs
+  if(cmp){
+    const j=LS.jun.tot, m=LS.may.tot;
+    const gps=(a,b,n)=>a/n - b; // unused
+    const defs=[
+      {lab:'Direct GMV',v:fmtUSD(j.gmv),p:'May: '+fmtUSD(m.gmv),dd:g(j.gmv,m.gmv)},
+      {lab:'Direct Orders',v:fmtInt(j.orders),p:'May: '+fmtInt(m.orders),dd:g(j.orders,m.orders)},
+      {lab:'Items Sold',v:fmtInt(j.items),p:'May: '+fmtInt(m.items),dd:g(j.items,m.items)},
+      {lab:'Sessions',v:fmtInt(j.sessions),p:'May: '+fmtInt(m.sessions),dd:g(j.sessions,m.sessions)},
+      {lab:'Streamers',v:fmtInt(j.streamers),p:'May: '+fmtInt(m.streamers),dd:g(j.streamers,m.streamers),c:'alt'},
+      {lab:'GMV / Session',v:fmtUSD(j.gmv/j.sessions),p:'May: '+fmtUSD(m.gmv/m.sessions),dd:g(j.gmv/j.sessions,m.gmv/m.sessions),c:'alt'},
+      {lab:'Orders / Session',v:(j.orders/j.sessions).toFixed(0),p:'May: '+(m.orders/m.sessions).toFixed(0),dd:g(j.orders/j.sessions,m.orders/m.sessions),c:'alt'},
+      {lab:'Promo Cost',v:fmtUSD(j.cost),p:'May: '+fmtUSD(m.cost),dd:g(j.cost,m.cost),c:'alt',inv:1},
+    ];
+    document.getElementById('lsKpis').innerHTML=defs.map(x=>{let cls=x.dd>=0?'pos':'neg';if(x.inv)cls=x.dd>=0?'warn':'pos';const ar=x.dd>=0?'\u25B2':'\u25BC';
+      return '<div class="kpi '+(x.c||'')+'"><div class="lab">'+x.lab+'</div><div class="big num">'+x.v+'</div><div class="prev num">'+x.p+'</div><div class="delta '+cls+'">'+ar+' '+pct(x.dd)+'</div></div>';}).join('');
+  } else {
+    const kdefs=[
+      {lab:'Direct GMV',v:fmtUSD(t.gmv)},{lab:'Direct Orders',v:fmtInt(t.orders)},
+      {lab:'Items Sold',v:fmtInt(t.items)},{lab:'Sessions',v:fmtInt(t.sessions)},
+      {lab:'Streamers',v:fmtInt(t.streamers),c:'alt'},{lab:'GMV / Session',v:fmtUSD(t.gmv/t.sessions),c:'alt'},
+      {lab:'Orders / Session',v:(t.orders/t.sessions).toFixed(0),c:'alt'},{lab:'Promo Cost',v:fmtUSD(t.cost),c:'alt'},
+    ];
+    document.getElementById('lsKpis').innerHTML=kdefs.map(x=>'<div class="kpi '+(x.c||'')+'"><div class="lab">'+x.lab+'</div><div class="big num">'+x.v+'</div><div class="prev">'+(key==='jun'?'6.6':'5.5')+' livestream</div></div>').join('');
+  }
+  // bars
+  const barHTML=(arr,el,colf)=>{const mx=Math.max(...arr.map(a=>a.gmv));const tt=arr.reduce((s,a)=>s+a.gmv,0);
+    document.getElementById(el).innerHTML=arr.map((a,i)=>'<div class="barrow"><div class="blab"><b>'+a.k+'</b><span class="num" style="color:var(--muted);font-weight:600">'+fmtUSD(a.gmv)+' · '+(a.gmv/tt*100).toFixed(0)+'%</span></div><div class="track"><div class="bg"></div><div class="fillS" style="width:0;background:'+colf(i)+'" data-w="'+(a.gmv/mx*100)+'"></div></div></div>').join('');};
+  barHTML(d.byType,'lsType',i=>['var(--accent)','var(--accent2)','var(--mayc)'][i]||'var(--mayc)');
+  barHTML(d.byCat.slice(0,5),'lsCat',()=> key==='jun'?'var(--accent)':'var(--mayc)');
+  setTimeout(()=>document.querySelectorAll('#lsSection .fillS').forEach(b=>b.style.width=b.dataset.w+'%'),90);
+  // KOL by name
+  const kol=d.kol;
+  document.getElementById('kolSummary').textContent=kol.filter(k=>k.gmv>0).length+' KOLs with sales · '+fmtUSD(d.kolTot)+' · '+(d.kolTot/t.gmv*100).toFixed(0)+'% of LS GMV';
+  const kcols=[['#'],['KOL','l'],['Shop','l'],['Category','l'],['Sessions'],['GMV'],['Orders'],['Items']];
+  document.getElementById('kolHead').innerHTML='<tr>'+kcols.map((c,i)=>i===0?'<th class="l" style="width:32px">#</th>':'<th class="'+(c[1]||'')+'">'+c[0]+'</th>').join('')+'</tr>';
+  const kmx=Math.max(...kol.map(r=>r.gmv));
+  document.getElementById('kolBody').innerHTML=kol.map((r,i)=>{const nm=r.names.join(' / ');const lbl=nm.length>40?nm.slice(0,38)+'…':nm;const flag=r.multi?'<span class="tg sel">collab</span>':'';
+    if(r.nodata)return '<tr style="opacity:.6"><td class="l rank">'+(i+1)+'</td><td class="l"><b title="'+nm.replace(/"/g,'&quot;')+'">'+lbl+'</b>'+flag+' <span class="tg oa">no data</span></td><td class="l">—</td><td class="l">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+    return '<tr><td class="l rank">'+(i+1)+'</td><td class="l"><b title="'+nm.replace(/"/g,'&quot;')+'">'+lbl+'</b>'+flag+'</td><td class="l">'+cleanShop(r.shop)+'</td><td class="l" style="color:var(--muted);font-size:12px">'+r.cat+'</td><td class="num">'+fmtInt(r.sess)+'</td><td class="num">'+fmtUSD2(r.gmv)+' <span class="minibar" style="width:'+Math.max(2,r.gmv/kmx*38)+'px"></span></td><td class="num">'+fmtInt(r.orders)+'</td><td class="num">'+fmtInt(r.items)+'</td></tr>';}).join('');
+  // top streamers
+  const cols=[['#'],['Streamer','l'],['Shop','l'],['Category','l'],['Sessions'],['GMV'],['Orders'],['Items']];
+  document.getElementById('lsHead').innerHTML='<tr>'+cols.map((c,i)=>i===0?'<th class="l" style="width:32px">#</th>':'<th class="'+(c[1]||'')+'">'+c[0]+'</th>').join('')+'</tr>';
+  const mx=Math.max(...d.top.map(r=>r.gmv));
+  document.getElementById('lsBody').innerHTML=d.top.map((r,i)=>{
+    const badge=r.type==='KOL'?'<span class="tg kol">KOL</span>':(r.type==='Seller'?'<span class="tg sel">Seller</span>':'<span class="tg oa">OA</span>');
+    const who=r.name?('<b title="'+r.name.replace(/"/g,'&quot;')+'">'+(r.name.length>26?r.name.slice(0,24)+'…':r.name)+'</b>'):('<b>#'+r.id+'</b>');
+    return '<tr><td class="l rank">'+(i+1)+'</td><td class="l">'+who+badge+'</td><td class="l">'+cleanShop(r.shop)+'</td><td class="l" style="color:var(--muted);font-size:12px">'+r.cat+'</td><td class="num">'+fmtInt(r.sess)+'</td><td class="num">'+fmtUSD2(r.gmv)+' <span class="minibar" style="width:'+Math.max(2,r.gmv/mx*38)+'px"></span></td><td class="num">'+fmtInt(r.orders)+'</td><td class="num">'+fmtInt(r.items)+'</td></tr>';}).join('');
+}
+
+function renderAll(){
+  document.getElementById('periodtag').innerHTML='<b>'+PERIOD[mode]+'</b>';
+  document.querySelectorAll('#filt button').forEach(b=>b.classList.toggle('on',b.dataset.mode===mode));
+  renderKPI();renderDaily();renderTop();renderStore();renderSKU();renderLS();renderInsight();
+}
+document.querySelectorAll('#filt button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;stSortK=null;renderAll();}));
+document.querySelectorAll('#metricToggle button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#metricToggle button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  skuMetric=b.dataset.m;skuSortK=b.dataset.m;skuSortDir=-1;renderSKU();}));
+renderAll();
+</script>
+</body>
+</html>
